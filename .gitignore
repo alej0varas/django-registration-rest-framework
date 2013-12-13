@@ -1,0 +1,6 @@
+*~
+*.pyc
+*.html
+MANIFEST
+/dist
+/django_registration_rest_framework.egg-info
