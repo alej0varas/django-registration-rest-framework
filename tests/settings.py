@@ -5,9 +5,6 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
                          'NAME': os.path.join(DIRNAME, 'database.db'),
                          },
              }
-CACHES = {'default': {
-    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
-
 DEBUG = True
 DATABASES = DATABASES
 INSTALLED_APPS = ('django.contrib.auth',
@@ -17,6 +14,4 @@ INSTALLED_APPS = ('django.contrib.auth',
                   'registration_api',
                   )
 ROOT_URLCONF = 'registration_api.urls'
-CACHES = CACHES
-AUTH_USER_MODEL = 'auth.User'
-SECRET_KEY = 'adfs'
+SECRET_KEY = 'not-secret'
