@@ -37,9 +37,10 @@ urls.py
 
 .. code-block:: python
 
-    urlpatterns += patterns(
-    '',
-    include('^registration_api/', include('registration_api.urls'))
+    urlpatterns = patterns(
+    ...
+    url(r'^accounts_api/', include('registration_api.urls')),
+    ...
     )
 
 

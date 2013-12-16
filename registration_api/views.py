@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.http import HttpResponseRedirect
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -16,10 +16,21 @@ def register(request):
     serialized = UserSerializer(data=request.POST)
     if serialized.is_valid():
         user_data = utils.get_user_data(request.POST)
-        user = get_user_model().objects.create_user(
-            **user_data
-        )
-        return Response(UserSerializer(instance=user).data,
+        utils.create_inactive_user(**user_data)
+        return Response(utils.USER_CREATED_RESPONSE_DATA,
                         status=status.HTTP_201_CREATED)
     else:
         return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def activate(request, activation_key=None):
+    """
+    Given an an activation key, look up and activate the user
+    account corresponding to that key (if possible).
+
+    """
+    utils.activate_user(activation_key)
+    # if not activated
+    return HttpResponseRedirect(
+        utils.get_settings('ACTIVATE_REDIRECT_URL')
+        )

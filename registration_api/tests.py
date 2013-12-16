@@ -1,8 +1,10 @@
 from urllib import urlencode
 import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test import TestCase
@@ -11,11 +13,11 @@ from django.utils.datastructures import MergeDict
 from rest_framework import status
 from rest_framework.response import Response
 
-# from mock_django.http import MockHttpRequest
-
-from registration_api.serializers import UserSerializer
-from registration_api.views import register
 import utils
+
+from registration_api.models import RegistrationProfile
+from registration_api.serializers import UserSerializer
+from registration_api.views import activate, register
 
 
 class WsgiHttpRequest(HttpRequest):
@@ -100,6 +102,66 @@ class UtilsTests(TestCase):
 
         self.assertEqual(valid_data, data)
 
+    @mock.patch('registration_api.utils.send_activation_email')
+    @mock.patch('registration_api.utils.create_profile')
+    def test_create_inactive_user(self, mock_create_profile, mock_send_activation_email):
+        site = Site.objects.get()
+        user_model = get_user_model()
+        with mock.patch.object(user_model.objects, 'create_user') as mock_create_user:
+            mock_create_user.return_value = get_user_model()(**VALID_DATA)
+            user = utils.create_inactive_user(**VALID_DATA)
+
+            mock_create_user.assert_called_with(VALID_DATA['username'],
+                                                VALID_DATA['email'],
+                                                VALID_DATA['password'])
+            mock_create_profile.assert_called_with(user)
+            self.assertFalse(user.is_active)
+            self.assertTrue(user.pk)
+            mock_send_activation_email.assert_called_with(user, site)
+
+    @mock.patch('registration_api.utils.create_activation_key')
+    @mock.patch('registration_api.models.RegistrationProfile.objects.create')
+    def test_create_profile(self, mock_create, mock_create_activation_key):
+        mock_create.return_value = RegistrationProfile()
+        activation_key = 'activationkey'
+        mock_create_activation_key.return_value = activation_key
+        user = get_user_model()(**VALID_DATA)
+
+        registration_profile = utils.create_profile(user)
+
+        self.assertIsInstance(registration_profile, RegistrationProfile)
+        mock_create_activation_key.assert_called_with(user.username)
+        mock_create.assert_called_with(user=user,
+                                       activation_key=activation_key)
+
+    def test_create_activation_key(self):
+        username = 'username'
+
+        activation_key = utils.create_activation_key(username)
+
+        self.assertTrue(activation_key)
+        self.assertEqual(len(activation_key), 40)
+
+    def test_activate_user(self):
+        user = utils.create_inactive_user(**VALID_DATA)
+
+        user = utils.activate_user(user.registrationprofile.activation_key)
+
+        self.assertTrue(user.is_active)
+
+    def test_send_activations_email(self):
+        user = get_user_model().objects.create(**VALID_DATA)
+        RegistrationProfile.objects.create(user=user, activation_key='asdf')
+        site = Site.objects.get()
+        subject = ''
+        message = ''
+
+        with mock.patch.object(user, 'email_user') as mock_email_user:
+            utils.send_activation_email(user, site)
+
+            mock_email_user.assert_called_with(
+                subject, message, settings.DEFAULT_FROM_EMAIL)
+
 
 class UserSerializerTests(TestCase):
 
@@ -110,10 +172,10 @@ class UserSerializerTests(TestCase):
 class RegisterAPIViewTests(TestCase):
 
     @mock.patch('registration_api.utils.get_user_data')
-    @mock.patch('registration_api.views.get_user_model')
+    @mock.patch('registration_api.utils.create_inactive_user')
     @mock.patch('registration_api.views.UserSerializer')
     @mock.patch('registration_api.views.Response')
-    def test_valid_registration(self, mock_Response, mock_UserSerializer, mock_get_user_model, mock_get_user_data):
+    def test_valid_registration(self, mock_Response, mock_UserSerializer, mock_create_incative_user, mock_get_user_data):
         created_user = 'user'
         mock_Response.return_value = Response()
         mock_userserializer_instance = mock.Mock()
@@ -126,20 +188,17 @@ class RegisterAPIViewTests(TestCase):
         mock_objects.create_user = mock_create_user
         mock_user_model = mock.Mock()
         mock_user_model.objects = mock_objects
-        mock_get_user_model.return_value = mock_user_model
-        mock_get_user_model.objects = mock_objects
         mock_get_user_data.return_value = VALID_DATA
 
         request = MockHttpRequest(POST=VALID_DATA)
 
         register(request)
 
-        mock_UserSerializer.assert_called_with(instance=created_user)
+        mock_UserSerializer.assert_called_with(data=VALID_DATA)
         mock_Response.assert_called_with(
-            VALID_DATA,
+            utils.USER_CREATED_RESPONSE_DATA,
             status=status.HTTP_201_CREATED)
-        mock_get_user_model.assert_called_with()
-        mock_create_user.assert_called_with(**VALID_DATA)
+        mock_create_incative_user.assert_called_with(**VALID_DATA)
 
     @mock.patch('registration_api.views.UserSerializer')
     @mock.patch('registration_api.views.Response')
@@ -166,6 +225,8 @@ class RegisterAPIViewTests(TestCase):
 
         self.assertEqual(201, response.status_code)
         self.assertTrue(get_user_model().objects.get())
+        self.assertFalse(get_user_model().objects.get().is_active)
+        self.assertTrue(RegistrationProfile.objects.get())
 
     def test_functional_invalid(self):
         url = reverse('registration_api_register')
@@ -174,3 +235,23 @@ class RegisterAPIViewTests(TestCase):
 
         self.assertEqual(400, response.status_code)
         self.assertFalse(get_user_model().objects.filter())
+
+
+class ActivateViewTests(TestCase):
+
+    def test_activate(self):
+        user = utils.create_inactive_user(**VALID_DATA)
+        request = MockHttpRequest()
+
+        response = activate(
+            request,
+            activation_key=user.registrationprofile.activation_key)
+        user = get_user_model().objects.get(pk=user.pk)
+
+        self.assertTrue(user.is_active)
+        self.assertEqual(user.registrationprofile.activation_key,
+                         RegistrationProfile.ACTIVATED)
+        self.assertEqual(response.status_code,
+                         status.HTTP_302_FOUND)
+        self.assertEqual(response['location'],
+                         settings.REGISTRATION_API['ACTIVATE_REDIRECT_URL'])

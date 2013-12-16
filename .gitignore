@@ -3,4 +3,5 @@
 *.html
 MANIFEST
 /dist
+/build
 /django_registration_rest_framework.egg-info
