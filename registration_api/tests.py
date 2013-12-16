@@ -73,15 +73,12 @@ def MockHttpRequest(path='/', method='GET', GET=None, POST=None, META=None, user
     return request
 
 
-# Based on django.contrib.auth.models.User
-EXPECTED_VALID_USER_FIELDS = [u'id', 'username', 'first_name', 'last_name',
-                              'password', 'last_login', 'is_superuser',
-                              'email', 'is_staff', 'is_active', 'date_joined']
-
-VALID_DATA = {'username': 'john', 'email': 'john@example.com',
-              'password': 'verylongpassword'}
-
-
+EXPECTED_VALID_USER_FIELDS = [f.name for f in get_user_model()._meta.fields]
+POST_DATA = {'username': 'john', 'email': 'john@example.com',
+             'password': 'verylongpassword'}
+VALID_DATA = dict(
+    [(k, v) for k, v in POST_DATA.items()
+     if k in EXPECTED_VALID_USER_FIELDS])
 INVALID_DATA = VALID_DATA.copy()
 INVALID_DATA.pop('password')
 
@@ -111,9 +108,13 @@ class UtilsTests(TestCase):
             mock_create_user.return_value = get_user_model()(**VALID_DATA)
             user = utils.create_inactive_user(**VALID_DATA)
 
-            mock_create_user.assert_called_with(VALID_DATA['username'],
-                                                VALID_DATA['email'],
-                                                VALID_DATA['password'])
+            if hasattr(user, 'username'):
+                mock_create_user.assert_called_with(VALID_DATA['username'],
+                                                    VALID_DATA['email'],
+                                                    VALID_DATA['password'])
+            else:
+                mock_create_user.assert_called_with(VALID_DATA['email'],
+                                                    VALID_DATA['password'])
             mock_create_profile.assert_called_with(user)
             self.assertFalse(user.is_active)
             self.assertTrue(user.pk)
@@ -130,14 +131,14 @@ class UtilsTests(TestCase):
         registration_profile = utils.create_profile(user)
 
         self.assertIsInstance(registration_profile, RegistrationProfile)
-        mock_create_activation_key.assert_called_with(user.username)
+        mock_create_activation_key.assert_called_with(user)
         mock_create.assert_called_with(user=user,
                                        activation_key=activation_key)
 
     def test_create_activation_key(self):
-        username = 'username'
+        user = get_user_model().objects.create(**VALID_DATA)
 
-        activation_key = utils.create_activation_key(username)
+        activation_key = utils.create_activation_key(user)
 
         self.assertTrue(activation_key)
         self.assertEqual(len(activation_key), 40)

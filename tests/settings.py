@@ -14,7 +14,9 @@ INSTALLED_APPS = ('django.contrib.auth',
                   'django.contrib.admin',
                   'django.contrib.sites',
                   'registration_api',
+                  # 'custom_user',
                   )
+# AUTH_USER_MODEL = 'custom_user.EmailUser'
 ROOT_URLCONF = 'registration_api.urls'
 
 SECRET_KEY = 'not-secret'

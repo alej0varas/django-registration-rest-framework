@@ -10,6 +10,7 @@ from django.test.runner import DiscoverRunner
 
 
 def runtests():
+
     if sys.argv[0] == 'runtests.py' and len(sys.argv) == 2:
         suite = ['registration_api.tests.' + sys.argv[1]]
     else:
@@ -19,6 +20,7 @@ def runtests():
     failures = test_runner.run_tests(suite, verbosity=1, interactive=True)
 
     sys.exit(failures)
+
 
 if __name__ == '__main__':
     runtests()

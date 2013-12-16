@@ -49,7 +49,10 @@ def get_user_data(data):
 @transaction.atomic
 def create_inactive_user(username=None, email=None, password=None):
     user_model = get_user_model()
-    new_user = user_model.objects.create_user(username, email, password)
+    if username is not None:
+        new_user = user_model.objects.create_user(username, email, password)
+    else:
+        new_user = user_model.objects.create_user(email, password)
     new_user.is_active = False
     new_user.save()
     create_profile(new_user)
@@ -59,13 +62,14 @@ def create_inactive_user(username=None, email=None, password=None):
 
 
 def create_profile(user):
-    activation_key = create_activation_key(user.username)
+    activation_key = create_activation_key(user)
     registration_profile = RegistrationProfile.objects.create(
         user=user, activation_key=activation_key)
     return registration_profile
 
 
-def create_activation_key(username):
+def create_activation_key(user):
+    username = getattr(user, user.USERNAME_FIELD)
     salt_bytes = str(random.random()).encode('utf-8')
     salt = hashlib.sha1(salt_bytes).hexdigest()[:5]
 
