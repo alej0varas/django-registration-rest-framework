@@ -20,6 +20,4 @@ INSTALLED_APPS = ('django.contrib.auth',
 ROOT_URLCONF = 'registration_api.urls'
 
 SECRET_KEY = 'not-secret'
-REGISTRATION_API = {'ACTIVATION_DAYS': 7,
-                    'ACTIVATE_REDIRECT_URL': '/'}
 SITE_ID = 1

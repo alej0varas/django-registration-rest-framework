@@ -5,6 +5,8 @@ from django.db import models
 from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
 
+import utils
+
 
 class RegistrationProfile(models.Model):
     """
@@ -39,6 +41,6 @@ class RegistrationProfile(models.Model):
 
         """
         expiration_date = datetime.timedelta(
-            days=settings.REGISTRATION_API['ACTIVATION_DAYS'])
+            days=utils.get_settings('ACTIVATION_DAYS'))
         return self.activation_key == self.ACTIVATED or \
             (self.user.date_joined + expiration_date <= datetime_now())

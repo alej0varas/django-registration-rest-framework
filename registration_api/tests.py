@@ -255,4 +255,4 @@ class ActivateViewTests(TestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_302_FOUND)
         self.assertEqual(response['location'],
-                         settings.REGISTRATION_API['ACTIVATE_REDIRECT_URL'])
+                         utils.get_settings('ACTIVATE_REDIRECT_URL'))
