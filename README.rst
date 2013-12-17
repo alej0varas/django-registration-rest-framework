@@ -33,6 +33,9 @@ settings.py
     'registration_api',
     ...
 
+    # This setting is mandatory
+    REGISTRATION_API_ACTIVATION_SUCCESS_URL = '/'
+
 urls.py
 
 .. code-block:: python
