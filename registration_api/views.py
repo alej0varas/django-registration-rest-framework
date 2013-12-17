@@ -31,6 +31,6 @@ def activate(request, activation_key=None):
     """
     utils.activate_user(activation_key)
     # if not activated
-    return HttpResponseRedirect(
-        utils.get_settings('ACTIVATE_REDIRECT_URL')
-        )
+    success_url = utils.get_settings('REGISTRATION_API_ACTIVATION_SUCCESS_URL')
+    if success_url is not None:
+        return HttpResponseRedirect(success_url)

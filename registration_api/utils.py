@@ -5,6 +5,7 @@ import re
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.template.loader import render_to_string
 
@@ -13,18 +14,19 @@ from .models import RegistrationProfile
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 DEFAULT_SETTINGS = {
-    'ACTIVATION_DAYS': 7,
-    'ACTIVATE_REDIRECT_URL': '/',
+    'REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS': 7,
 }
 
 
 def get_settings(key):
-    app_settings = getattr(settings, 'REGISTRATION_API', DEFAULT_SETTINGS)
-    return app_settings[key]
+    setting = getattr(settings, key, DEFAULT_SETTINGS.get(key, None))
+    if setting is None:
+        raise ImproperlyConfigured("The %s setting must not be empty." % key)
+    return setting
 
 
 USER_CREATED_RESPONSE_DATA = {
-    'activation_days': get_settings('ACTIVATION_DAYS')
+    'activation_days': get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS')
     }
 
 
@@ -149,7 +151,7 @@ def send_activation_email(user, site):
 
     """
     ctx_dict = {'activation_key': user.registrationprofile.activation_key,
-                'expiration_days': get_settings('ACTIVATION_DAYS'),
+                'expiration_days': get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS'),
                 'site': site}
     subject = render_to_string('registration_api/activation_email_subject.txt',
                                ctx_dict)

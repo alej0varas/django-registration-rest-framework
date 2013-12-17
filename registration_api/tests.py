@@ -5,16 +5,17 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils.datastructures import MergeDict
 
 from rest_framework import status
 from rest_framework.response import Response
 
-import utils
-
+from registration_api import utils
 from registration_api.models import RegistrationProfile
 from registration_api.serializers import UserSerializer
 from registration_api.views import activate, register
@@ -163,6 +164,18 @@ class UtilsTests(TestCase):
             mock_email_user.assert_called_with(
                 subject, message, settings.DEFAULT_FROM_EMAIL)
 
+    def test_get_settings(self):
+        value = utils.get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS')
+
+        self.assertEqual(
+            value,
+            utils.DEFAULT_SETTINGS['REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS'])
+
+    @override_settings(REGISTRATION_API_ACTIVATION_SUCCESS_URL=None)
+    def test_get_settings_ImproperlyConfigured(self):
+        self.assertRaises(ImproperlyConfigured, utils.get_settings,
+                          'REGISTRATION_API_ACTIVATION_SUCCESS_URL')
+
 
 class UserSerializerTests(TestCase):
 
@@ -255,4 +268,15 @@ class ActivateViewTests(TestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_302_FOUND)
         self.assertEqual(response['location'],
-                         utils.get_settings('ACTIVATE_REDIRECT_URL'))
+                         utils.get_settings('REGISTRATION_API_ACTIVATION_SUCCESS_URL'))
+
+    @override_settings(REGISTRATION_API_ACTIVATION_SUCCESS_URL=None)
+    def test_activate__without_ACTIVATE_REDIRECT_URL(self):
+        user = utils.create_inactive_user(**VALID_DATA)
+        request = MockHttpRequest()
+
+        self.assertRaises(
+            ImproperlyConfigured,
+            activate,
+            request,
+            activation_key=user.registrationprofile.activation_key)

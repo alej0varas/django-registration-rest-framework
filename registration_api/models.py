@@ -31,11 +31,11 @@ class RegistrationProfile(models.Model):
 
         2. Otherwise, the date the user signed up is incremented by
         the number of days specified in the setting
-        ``ACCOUNT_ACTIVATION_DAYS`` (which should be the number of
-        days after signup during which a user is allowed to
-        activate their account); if the result is less than or
-        equal to the current date, the key has expired and this
-        method returns ``True``.
+        ``REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS`` (which should be
+        the number of days after signup during which a user is allowed
+        to activate their account); if the result is less than or
+        equal to the current date, the key has expired and this method
+        returns ``True``.
 
         """
 
@@ -43,6 +43,6 @@ class RegistrationProfile(models.Model):
         import utils
 
         expiration_date = datetime.timedelta(
-            days=utils.get_settings('ACTIVATION_DAYS'))
+            days=utils.get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS'))
         return self.activation_key == self.ACTIVATED or \
             (self.user.date_joined + expiration_date <= datetime_now())
