@@ -5,8 +5,6 @@ from django.db import models
 from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
 
-import utils
-
 
 class RegistrationProfile(models.Model):
     """
@@ -40,6 +38,10 @@ class RegistrationProfile(models.Model):
         method returns ``True``.
 
         """
+
+        # utils imported here to avoid circular import
+        import utils
+
         expiration_date = datetime.timedelta(
             days=utils.get_settings('ACTIVATION_DAYS'))
         return self.activation_key == self.ACTIVATED or \
