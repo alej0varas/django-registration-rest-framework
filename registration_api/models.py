@@ -14,8 +14,7 @@ class RegistrationProfile(models.Model):
     """
     ACTIVATED = u"ALREADY_ACTIVATED"
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                unique=True, verbose_name=_('user'))
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True, verbose_name=_('user'), related_name='api_registration_profile')
     activation_key = models.CharField(_('activation key'), max_length=40)
 
     def activation_key_expired(self):

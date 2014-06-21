@@ -6,10 +6,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
-from django.db import transaction
 from django.template.loader import render_to_string
 
 from .models import RegistrationProfile
+
+from django.db import transaction
+# django 1.6, 1.5 and 1.4 supports
+try:
+    atomic_decorator = transaction.atomic
+except AttributeError:
+    atomic_decorator = transaction.commit_on_success
 
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
@@ -48,7 +54,7 @@ def get_user_data(data):
     return user_data
 
 
-@transaction.atomic
+@atomic_decorator
 def create_inactive_user(username=None, email=None, password=None):
     user_model = get_user_model()
     if username is not None:
