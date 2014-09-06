@@ -54,7 +54,7 @@ def create_inactive_user(username=None, email=None, password=None):
     if username is not None:
         new_user = user_model.objects.create_user(username, email, password)
     else:
-        new_user = user_model.objects.create_user(email, password)
+        new_user = user_model.objects.create_user(email=email, password=password)
     new_user.is_active = False
     new_user.save()
     create_profile(new_user)
@@ -150,7 +150,7 @@ def send_activation_email(user, site):
     framework for details regarding these objects' interfaces.
 
     """
-    ctx_dict = {'activation_key': user.registrationprofile.activation_key,
+    ctx_dict = {'activation_key': user.api_registration_profile.activation_key,
                 'expiration_days': get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS'),
                 'site': site}
     subject = render_to_string('registration_api/activation_email_subject.txt',
