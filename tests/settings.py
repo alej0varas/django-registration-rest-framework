@@ -23,3 +23,9 @@ SECRET_KEY = 'not-secret'
 SITE_ID = 1
 
 REGISTRATION_API_ACTIVATION_SUCCESS_URL = '/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+    )
+}
