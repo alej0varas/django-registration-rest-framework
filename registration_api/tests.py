@@ -147,7 +147,7 @@ class UtilsTests(TestCase):
     def test_activate_user(self):
         user = utils.create_inactive_user(**VALID_DATA)
 
-        user = utils.activate_user(user.registrationprofile.activation_key)
+        user = utils.activate_user(user.api_registration_profile.activation_key)
 
         self.assertTrue(user.is_active)
 
@@ -259,11 +259,11 @@ class ActivateViewTests(TestCase):
 
         response = activate(
             request,
-            activation_key=user.registrationprofile.activation_key)
+            activation_key=user.api_registration_profile.activation_key)
         user = get_user_model().objects.get(pk=user.pk)
 
         self.assertTrue(user.is_active)
-        self.assertEqual(user.registrationprofile.activation_key,
+        self.assertEqual(user.api_registration_profile.activation_key,
                          RegistrationProfile.ACTIVATED)
         self.assertEqual(response.status_code,
                          status.HTTP_302_FOUND)
@@ -279,4 +279,4 @@ class ActivateViewTests(TestCase):
             ImproperlyConfigured,
             activate,
             request,
-            activation_key=user.registrationprofile.activation_key)
+            activation_key=user.api_registration_profile.activation_key)
