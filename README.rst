@@ -14,7 +14,8 @@ django-registration https://django-registration.readthedocs.org/
 
 Install
 =======
-::
+
+.. code-block::
 
     $ git clone git@github.com:tucarga/django-registration-rest-framework.git
 
@@ -37,6 +38,7 @@ settings.py
     REGISTRATION_API_ACTIVATION_SUCCESS_URL = '/'
 
 urls.py
+-------
 
 .. code-block:: python
 
@@ -46,13 +48,28 @@ urls.py
     ...
     )
 
+Front-end
+---------
+From your front-end or mobile application send a post to the register
+url 'accounts_api/register/'. The fields depends on your `AUTH_USER_MODEL` but should be
+something like
+
+.. code-block:: json
+
+  [{"username": "john", "email": "john@example.com", "password": "verylongpassword"}]
+
+This will trigger an email to the addess specified by the user. When
+the user follows the link the account is activated.
+
 
 Test
 ====
-::
+.. code-block::
 
     $ python tests/runtests.py [TestsCase[.test_method]]
 
-or::
+or
+
+.. code-block::
 
     $ python setup.py test
