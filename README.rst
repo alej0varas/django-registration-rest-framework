@@ -2,6 +2,7 @@
  Django Registration Rest Framework
 ====================================
 Clone of Django Resgistration flow for Django Rest Framework
+Needs 'django.contrib.sites' and an email backend
 
 Based on
 ========
