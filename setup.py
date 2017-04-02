@@ -10,7 +10,10 @@ setup(name='django-registration-rest-framework',
       packages=find_packages(),
       requires=['djangorestframework'],
       test_suite='tests.runtests.runtests',
-      install_requires=['djangorestframework==2.3.10'],
+      install_requires=[
+          'djangorestframework==2.3.10',
+          'django==1.10.0'
+      ],
       tests_require=[
           'mock==1.0.1',
           'Django>=1.5',
