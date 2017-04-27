@@ -33,7 +33,7 @@ def get_settings(key):
 
 USER_CREATED_RESPONSE_DATA = {
     'activation_days': get_settings('REGISTRATION_API_ACCOUNT_ACTIVATION_DAYS')
-    }
+}
 
 
 def get_valid_user_fields():
