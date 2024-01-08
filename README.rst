@@ -1,3 +1,5 @@
+.. note: THIS REPOSITORY IS *NOT* MAINTAINED ANYMORE.
+
 ====================================
  Django Registration Rest Framework
 ====================================
